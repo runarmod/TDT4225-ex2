@@ -1,0 +1,23 @@
+[project]
+name = "tdt4225-ex2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Runar Saur Modahl", email = "runarsm@ntnu.no" },
+    { name = "Martin Sandaker Reve", email = "martirev@ntnu.no" },
+    { name = "Morten Madsen Lyngstad", email = "morteml@ntnu.no" },
+]
+requires-python = ">=3.14"
+dependencies = [
+    "haversine==2.8.1",
+    "mysql-connector-python==8.0.33",
+    "tabulate==0.9.0",
+]
+
+[project.scripts]
+main = "tdt4225_ex2:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
