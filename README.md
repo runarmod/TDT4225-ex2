@@ -3,9 +3,12 @@
 ## Setup
 
 ```sh
+cp .env.example .env
 uv sync
 docker compose up -d
 ```
+
+The database connection settings are read from `.env`. Modify username and password in `.env` if wanted, before starting the database.
 
 ## Pre-commit hooks
 

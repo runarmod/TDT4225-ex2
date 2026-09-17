@@ -1,4 +1,9 @@
+import os
+
 import mysql.connector as mysql
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class DbConnector:
@@ -7,27 +12,42 @@ class DbConnector:
     Connector needs HOST, DATABASE, USER and PASSWORD to connect,
     while PORT is optional and should be 3306.
 
-    Example:
-    HOST = "tdt4225-01.idi.ntnu.no" // Your server IP address/domain name
-    DATABASE = "test_db" // Database name, if you just want to connect to MySQL server, leave it empty
-    USER = "mysql_user" // This is the user you created and added privileges for
-    PASSWORD = "mysql_password" // The password you set for said user
+    Connection settings are read from environment variables, which can be
+    set in a .env file (see .env.example).
+
+    Example .env:
+    DB_HOST=tdt4225-01.idi.ntnu.no // Your server IP address/domain name
+    DB_DATABASE=test_db // Database name, if you just want to connect to MySQL server, leave it empty
+    DB_USER=mysql_user // This is the user you created and added privileges for
+    DB_PASSWORD=mysql_password // The password you set for said user
     """
 
     def __init__(
         self,
-        HOST="tdt4225-01.idi.ntnu.no",
-        DATABASE="test_db",
-        USER="mysql_user",
-        PASSWORD="mysql_password",
+        HOST=None,
+        DATABASE=None,
+        USER=None,
+        PASSWORD=None,
+        PORT=None,
     ):
+        HOST = default_if_none(HOST, os.getenv("DB_HOST", "tdt4225-01.idi.ntnu.no"))
+        DATABASE = default_if_none(DATABASE, os.getenv("DB_DATABASE"))
+        USER = default_if_none(USER, os.getenv("DB_USER"))
+        PASSWORD = default_if_none(PASSWORD, os.getenv("DB_PASSWORD"))
+        PORT = default_if_none(PORT, os.getenv("DB_PORT", "3306"))
+
         # Connect to the database
         try:
             self.db_connection = mysql.connect(
-                host=HOST, database=DATABASE, user=USER, password=PASSWORD, port=3306
+                host=HOST,
+                database=DATABASE,
+                user=USER,
+                password=PASSWORD,
+                port=int(PORT),
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             print("ERROR: Failed to connect to db:", e)
+            raise
 
         # Get the db cursor
         self.cursor = self.db_connection.cursor()
@@ -48,11 +68,10 @@ class DbConnector:
         print(f"Connection to {self.db_connection.get_server_info()} is closed")
 
 
+def default_if_none(value, default):
+    return value if value is not None else default
+
+
 if __name__ == "__main__":
-    db_connector = DbConnector(
-        HOST="localhost",
-        DATABASE="porto_db",
-        USER="mysql_user",
-        PASSWORD="mysql_password",
-    )
+    db_connector = DbConnector()
     db_connector.close_connection()
