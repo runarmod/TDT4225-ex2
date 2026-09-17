@@ -1,0 +1,31 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-case-conflict
+      - id: check-illegal-windows-names
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.12.15
+    hooks:
+      - id: uv-lock
+      - id: uv-export
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.8
+    hooks:
+      - id: ruff-check
+        name: lint with ruff
+      - id: ruff
+        name: sort imports with ruff
+        args: [--select, I, --fix]
+      - id: ruff-format
+        name: format with ruff
