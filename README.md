@@ -4,6 +4,7 @@
 
 ```sh
 uv sync
+docker compose up -d
 ```
 
 ## Pre-commit hooks
