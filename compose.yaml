@@ -3,14 +3,11 @@ services:
         image: mysql:8.0
         container_name: mysql
         ports:
-            - "${DB_PORT}:3306"
+            - "${MYSQL_PORT}:3306"
         env_file:
             - .env
         environment:
-            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-            MYSQL_DATABASE: ${DB_DATABASE}
-            MYSQL_USER: ${DB_USER}
-            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_HOST: '%' # Allow connection from any host
         volumes:
             - mysql_data:/var/lib/mysql
         restart: unless-stopped

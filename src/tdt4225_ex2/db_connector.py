@@ -16,10 +16,10 @@ class DbConnector:
     set in a .env file (see .env.example).
 
     Example .env:
-    DB_HOST=tdt4225-01.idi.ntnu.no // Your server IP address/domain name
-    DB_DATABASE=test_db // Database name, if you just want to connect to MySQL server, leave it empty
-    DB_USER=mysql_user // This is the user you created and added privileges for
-    DB_PASSWORD=mysql_password // The password you set for said user
+    MYSQL_HOST=tdt4225-01.idi.ntnu.no // Your server IP address/domain name
+    MYSQL_DATABASE=test_db // Database name, if you just want to connect to MySQL server, leave it empty
+    MYSQL_USER=mysql_user // This is the user you created and added privileges for
+    MYSQL_PASSWORD=mysql_password // The password you set for said user
     """
 
     def __init__(
@@ -30,11 +30,11 @@ class DbConnector:
         PASSWORD=None,
         PORT=None,
     ):
-        HOST = default_if_none(HOST, os.getenv("DB_HOST", "tdt4225-01.idi.ntnu.no"))
-        DATABASE = default_if_none(DATABASE, os.getenv("DB_DATABASE"))
-        USER = default_if_none(USER, os.getenv("DB_USER"))
-        PASSWORD = default_if_none(PASSWORD, os.getenv("DB_PASSWORD"))
-        PORT = default_if_none(PORT, os.getenv("DB_PORT", "3306"))
+        HOST = default_if_none(HOST, os.getenv("MYSQL_HOST", "tdt4225-01.idi.ntnu.no"))
+        DATABASE = default_if_none(DATABASE, os.getenv("MYSQL_DATABASE"))
+        USER = default_if_none(USER, os.getenv("MYSQL_USER"))
+        PASSWORD = default_if_none(PASSWORD, os.getenv("MYSQL_PASSWORD"))
+        PORT = default_if_none(PORT, os.getenv("MYSQL_PORT", "3306"))
 
         # Connect to the database
         try:
