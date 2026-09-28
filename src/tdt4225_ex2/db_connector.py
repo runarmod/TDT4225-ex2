@@ -38,7 +38,7 @@ class DbConnector:
 
         # Connect to the database
         try:
-            self.db_connection = mysql.connect(
+            self.db_connection: mysql.MySQLConnection = mysql.connect(
                 host=HOST,
                 database=DATABASE,
                 user=USER,
