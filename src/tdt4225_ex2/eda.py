@@ -1,8 +1,17 @@
+import random
 from pathlib import Path
+from typing import Literal, TypedDict
 
 import polars as pl
+import pydeck as pdk
 
 pl.Config(set_tbl_cols=1000)
+
+
+class TripPath(TypedDict):
+    path: list[list[float]]
+    trip_id: int
+    color: int
 
 
 def remove_invalid_trips(df: pl.DataFrame) -> pl.DataFrame:
@@ -59,6 +68,30 @@ def get_clean_data(verify: bool = False):
     return df
 
 
+def get_color(seed: int) -> tuple[int, int, int, Literal[128]]:
+    random.seed(seed)
+    return tuple(random.randrange(60, 256) for _ in range(3)) + (128,)
+
+
+def visualize_trip_paths(data: list[TripPath]) -> None:
+    layer = pdk.Layer(
+        "PathLayer",
+        data,
+        get_path="path",
+        get_color="color",
+        # get_color=[255, 128, 0, 128],
+        width_min_pixels=1,
+        pickable=True,
+    )
+    view = pdk.ViewState(latitude=41.17, longitude=-8.65, zoom=11)
+    pdk.Deck(
+        layers=[layer],
+        initial_view_state=view,
+        map_style="dark",
+        tooltip={"text": "Trip {trip_id}"},
+    ).to_html("routes.html")
+
+
 def eda():
     df = get_clean_data(verify=True)
     dupe_counts = (
@@ -72,6 +105,16 @@ def eda():
         ["TRIP_ID", "TIMESTAMP"]
     )
     print(all_dupes)
+
+    data: list[TripPath] = [
+        TripPath(
+            path=row["POLYLINE"],
+            trip_id=row["TRIP_ID"],
+            color=get_color(row["TAXI_ID"]),
+        )
+        for row in df.sample(100000).iter_rows(named=True)
+    ]
+    visualize_trip_paths(data)
 
 
 if __name__ == "__main__":
