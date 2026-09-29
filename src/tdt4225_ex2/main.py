@@ -12,7 +12,7 @@ class PortoHandler:
         self.connection = self.db_connector.db_connection
 
     def create_tables(self) -> None:
-        self.cursor.execute("DROP TABLE porto")  # Always start fresh during EDA
+        self.cursor.execute("DROP TABLE IF EXISTS porto")  # Always start fresh during EDA
         self.connection.commit()
 
         # TODO: split into multiple tables?
