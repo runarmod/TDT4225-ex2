@@ -59,8 +59,12 @@ def get_clean_data(verify: bool = False):
         )
     )
 
-    df = remove_invalid_trips(df)  # Task 2.7
+    # df = remove_invalid_trips(df)  # Task 2.7 (Not allowed apparently!)
+
     df = df.unique()  # Remove duplicated lines (found during EDA)
+    df = df.unique(
+        subset=["TRIP_ID"], keep="first"
+    )  # Remove lines with duplicated primary key (TODO: figure out some better way)
 
     if verify:
         verify_data(df)
