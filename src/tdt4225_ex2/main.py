@@ -131,7 +131,40 @@ class PortoHandler:
             print("3. top 20 taxi based on trips:")
             print(tabulate(self.cursor.fetchall(), headers=("Taxi ID", "Trip count")))
 
-        for subtask in (subtask1, subtask2, subtask3):
+        def subtask4():
+            query = """
+                SELECT TAXI_ID, CALL_TYPE, trip_count 
+                FROM (
+                    SELECT TAXI_ID, CALL_TYPE, COUNT(*) AS trip_count, ROW_NUMBER()
+                    OVER (PARTITION BY TAXI_ID ORDER BY COUNT(*) DESC, CALL_TYPE) AS rn
+                    FROM porto_trips GROUP BY TAXI_ID, CALL_TYPE
+                ) ranked
+                WHERE rn = 1"""
+            self.cursor.execute(query)
+            print("4.a most common call type per taxi:")
+            print(
+                tabulate(
+                    self.cursor.fetchall(),
+                    headers=("Taxi ID", "Most used call type", "Used count"),
+                )
+            )
+
+            # TODO: 4b
+
+        def subtask7():
+            query = """
+            SELECT COUNT(*)
+            FROM (
+                SELECT pt.TRIP_ID, COUNT(ptp.TRIP_ID) AS trip_gps_points
+                FROM porto_trips AS pt
+                LEFT JOIN porto_trips_polyline AS ptp ON pt.TRIP_ID = ptp.TRIP_ID
+                GROUP BY pt.TRIP_ID
+                HAVING trip_gps_points < 3
+            ) AS invalid_trips"""
+            self.cursor.execute(query)
+            print("7. invalid trip count:", self.cursor.fetchone()[0])
+
+        for subtask in (subtask1, subtask2, subtask3, subtask4, subtask7):
             subtask()
             print()
 
