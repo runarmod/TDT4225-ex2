@@ -1,10 +1,28 @@
-import itertools
-
 import polars as pl
 import tqdm
 
 from tdt4225_ex2.db_connector import DbConnector
 from tdt4225_ex2.eda import get_clean_data
+
+TRIP_COLS = [
+    "TRIP_ID",
+    "CALL_TYPE",
+    "ORIGIN_CALL",
+    "ORIGIN_STAND",
+    "TAXI_ID",
+    "TIMESTAMP",
+    "DAY_TYPE",
+    "MISSING_DATA",
+]
+POLY_COLS = [
+    "TRIP_ID",
+    "COORDINATE_NUMBER",
+    "LONGITUDE",
+    "LATITUDE",
+]
+
+TRIP_SQL = f"INSERT INTO porto_trips ({', '.join(TRIP_COLS)}) VALUES ({', '.join('%s' for _ in TRIP_COLS)})"
+POLY_SQL = f"INSERT INTO porto_trips_polyline ({', '.join(POLY_COLS)}) VALUES ({', '.join('%s' for _ in POLY_COLS)})"
 
 
 class PortoHandler:
@@ -17,8 +35,8 @@ class PortoHandler:
 
     def create_tables(self) -> None:
         # Always start fresh during EDA
-        self.cursor.execute("DROP TABLE IF EXISTS porto_trips")
         self.cursor.execute("DROP TABLE IF EXISTS porto_trips_polyline")
+        self.cursor.execute("DROP TABLE IF EXISTS porto_trips")
         self.connection.commit()
 
         self.cursor.execute(
@@ -47,41 +65,26 @@ class PortoHandler:
 
     def insert_data(self, df: pl.DataFrame):
         df = df.sort("TRIP_ID")
-        batch_size = 10_000
-        for batch in tqdm.tqdm(
-            itertools.batched(df.iter_rows(named=True), batch_size),
-            total=len(df) // batch_size + 1,
-        ):
-            cols = [
-                "TRIP_ID",
-                "CALL_TYPE",
-                "ORIGIN_CALL",
-                "ORIGIN_STAND",
-                "TAXI_ID",
-                "TIMESTAMP",
-                "DAY_TYPE",
-                "MISSING_DATA",
-            ]
-            self.cursor.executemany(
-                f"INSERT INTO porto_trips ({', '.join(cols)}) VALUES ({', '.join('%s' for _ in cols)})",
-                [[row[k] for k in cols] for row in batch],
-            )
+        batch_size = 7_500
 
-            cols = [
-                "TRIP_ID",
-                "COORDINATE_NUMBER",
-                "LONGITUDE",
-                "LATITUDE",
-            ]
-            insert_rows = [
-                (row["TRIP_ID"], i, *coord)
-                for row in batch
-                for i, coord in enumerate(row["POLYLINE"])
-            ]
-            self.cursor.executemany(
-                f"INSERT INTO porto_trips_polyline ({', '.join(cols)}) VALUES ({', '.join('%s' for _ in cols)})",
-                insert_rows,
+        for offset in tqdm.trange(0, df.height, batch_size):
+            batch = df.slice(offset, batch_size)
+
+            self.cursor.executemany(TRIP_SQL, batch.select(TRIP_COLS).rows())
+
+            poly_rows = (
+                batch.select("TRIP_ID", "POLYLINE")
+                .explode("POLYLINE", empty_as_null=False)
+                .with_columns(
+                    COORDINATE_NUMBER=pl.int_range(pl.len()).over("TRIP_ID"),
+                    LONGITUDE=pl.col("POLYLINE").list.get(0),
+                    LATITUDE=pl.col("POLYLINE").list.get(1),
+                )
+                .select(POLY_COLS)
+                .rows()
             )
+            for i in tqdm.trange(0, len(poly_rows), batch_size, leave=False):
+                self.cursor.executemany(POLY_SQL, poly_rows[i : i + batch_size])
 
             self.connection.commit()
 
