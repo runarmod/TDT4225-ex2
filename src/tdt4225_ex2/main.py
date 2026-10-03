@@ -88,16 +88,30 @@ class PortoHandler:
 
             self.connection.commit()
 
-    def run(self) -> None:
+    def fill_db(self) -> None:
         try:
             self.create_tables()
             self.insert_data(get_clean_data())
         finally:
             self.db_connector.close_connection()
 
+    def task2(self):
+        def subtask1():
+            queries = [
+                ("taxis", "SELECT COUNT(DISTINCT TAXI_ID) FROM porto_trips"),
+                ("trips", "SELECT COUNT(*) FROM porto_trips"),
+                ("gps points", "SELECT COUNT(*) FROM porto_trips_polyline"),
+            ]
+            print("1.")
+            for name, query in queries:
+                self.cursor.execute(query)
+                print(f"{name}:", self.cursor.fetchone()[0])
+
+        subtask1()
+
 
 def main() -> None:
-    PortoHandler().run()
+    PortoHandler().task2()
 
 
 if __name__ == "__main__":
