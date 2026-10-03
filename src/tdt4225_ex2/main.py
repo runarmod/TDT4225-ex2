@@ -1,5 +1,6 @@
 import polars as pl
 import tqdm
+from tabulate import tabulate
 
 from tdt4225_ex2.db_connector import DbConnector
 from tdt4225_ex2.eda import get_clean_data
@@ -102,12 +103,37 @@ class PortoHandler:
                 ("trips", "SELECT COUNT(*) FROM porto_trips"),
                 ("gps points", "SELECT COUNT(*) FROM porto_trips_polyline"),
             ]
-            print("1.")
+            out = []
             for name, query in queries:
                 self.cursor.execute(query)
-                print(f"{name}:", self.cursor.fetchone()[0])
+                out.append((name, self.cursor.fetchone()[0]))
 
-        subtask1()
+            print("1.")
+            print(tabulate(out, headers=("Type", "Count")))
+
+        def subtask2():
+            query = (
+                "SELECT AVG(trip_count)"
+                "FROM (SELECT TAXI_ID, COUNT(*) AS trip_count FROM porto_trips GROUP BY TAXI_ID) AS trip_count"
+            )
+            self.cursor.execute(query)
+            print("2. average number of trips per taxi:", self.cursor.fetchone()[0])
+
+        def subtask3():
+            query = (
+                "SELECT TAXI_ID, COUNT(*) AS trip_count "
+                "FROM porto_trips "
+                "GROUP BY TAXI_ID "
+                "ORDER BY trip_count DESC "
+                "LIMIT 20"
+            )
+            self.cursor.execute(query)
+            print("3. top 20 taxi based on trips:")
+            print(tabulate(self.cursor.fetchall(), headers=("Taxi ID", "Trip count")))
+
+        for subtask in (subtask1, subtask2, subtask3):
+            subtask()
+            print()
 
 
 def main() -> None:
