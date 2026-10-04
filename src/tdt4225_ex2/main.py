@@ -1,3 +1,5 @@
+import math
+
 import polars as pl
 import tqdm
 from tabulate import tabulate
@@ -151,6 +153,42 @@ class PortoHandler:
 
             # TODO: 4b
 
+        def subtask6():
+            query = """
+            SELECT DISTINCT TRIP_ID
+            FROM porto_trips_polyline
+            WHERE LATITUDE BETWEEN %(latitude)s - %(d_latitude)s AND %(latitude)s + %(d_latitude)s
+                AND LONGITUDE BETWEEN %(longitude)s - %(d_longitude)s AND %(longitude)s + %(d_longitude)s
+                AND ST_Distance_Sphere(
+                        POINT(LONGITUDE, LATITUDE),
+                        POINT(%(longitude)s, %(latitude)s)
+                    ) <= %(distance)s"""
+
+            earth_radius = 6378137  # meters
+            meters_per_degree = earth_radius * math.pi / 180
+
+            distance = 100  # meters
+
+            latitude = 41.15794
+            longitude = -8.62911
+
+            d_latitude = distance / meters_per_degree
+            d_longitude = distance / (
+                meters_per_degree * math.cos(math.radians(latitude))
+            )
+            params = {
+                "latitude": latitude,
+                "longitude": longitude,
+                "d_latitude": d_latitude,
+                "d_longitude": d_longitude,
+                "distance": distance,
+            }
+            self.cursor.execute(query, params)
+            print(
+                "6. trips within 100 meters of Porto City Hall:",
+                tabulate(self.cursor.fetchall(), headers=("Trip ID",)),
+            )
+
         def subtask7():
             query = """
             SELECT COUNT(*)
@@ -164,7 +202,7 @@ class PortoHandler:
             self.cursor.execute(query)
             print("7. invalid trip count:", self.cursor.fetchone()[0])
 
-        for subtask in (subtask1, subtask2, subtask3, subtask4, subtask7):
+        for subtask in (subtask1, subtask2, subtask3, subtask4, subtask6, subtask7):
             subtask()
             print()
 
