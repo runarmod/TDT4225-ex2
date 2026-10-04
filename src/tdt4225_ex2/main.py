@@ -202,7 +202,30 @@ class PortoHandler:
             self.cursor.execute(query)
             print("7. invalid trip count:", self.cursor.fetchone()[0])
 
-        for subtask in (subtask1, subtask2, subtask3, subtask4, subtask6, subtask7):
+        def subtask8():
+            query = """
+            SELECT pt.TRIP_ID
+            FROM porto_trips AS pt
+            INNER JOIN (
+                SELECT TRIP_ID, MAX(COORDINATE_NUMBER) AS max_coord_num
+                FROM porto_trips_polyline
+                GROUP BY TRIP_ID
+            ) AS tgp ON pt.TRIP_ID = tgp.TRIP_ID
+            WHERE DATE(pt.TIMESTAMP + INTERVAL tgp.max_coord_num * 15 SECOND) > DATE(pt.TIMESTAMP)
+            """
+            self.cursor.execute(query)
+            print("8. trips that started on one day and ended on another day:")
+            print(tabulate(self.cursor.fetchall(), headers=("Trip ID",)))
+
+        for subtask in (
+            subtask1,
+            subtask2,
+            subtask3,
+            subtask4,
+            subtask6,
+            subtask7,
+            subtask8,
+        ):
             subtask()
             print()
 
