@@ -160,8 +160,8 @@ class PortoHandler:
             WHERE LATITUDE BETWEEN %(latitude)s - %(d_latitude)s AND %(latitude)s + %(d_latitude)s
                 AND LONGITUDE BETWEEN %(longitude)s - %(d_longitude)s AND %(longitude)s + %(d_longitude)s
                 AND ST_Distance_Sphere(
-                        POINT(LONGITUDE, LATITUDE),
-                        POINT(%(longitude)s, %(latitude)s)
+                        POINT(LATITUDE, LONGITUDE),
+                        POINT(%(latitude)s, %(longitude)s)
                     ) <= %(distance)s"""
 
             earth_radius = 6378137  # meters
