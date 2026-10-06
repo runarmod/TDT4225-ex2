@@ -260,6 +260,44 @@ class PortoHandler:
             print("8. trips that started on one day and ended on another day:")
             print(tabulate(self.cursor.fetchall(), headers=("Trip ID",)))
 
+        def subtask10():
+            # Naive solution:
+            # For each taxi, find all its trips. Find the time between each of its trips,
+            # and find the average time between.
+            #
+            # Optimization:
+            # For each taxi, find the start time of the first trip, end time of last trip,
+            # and total driving time. Average idle time is:
+            # (last trip end - first trip start - total driving time) / (total trips - 1)
+            # This way we do not have to touch the huge porto_trips_polyline table :)
+
+            query = """
+                SELECT
+                    TAXI_ID,
+                    (
+                        TIMESTAMPDIFF(
+                            SECOND,
+                            MIN(TIMESTAMP),
+                            MAX(TIMESTAMP + INTERVAL N_POINTS * 15 SECOND)
+                        ) - SUM(N_POINTS * 15)
+                    ) / (COUNT(*) - 1) / 60 / 60 AS avg_idle_hours,
+                    COUNT(*) - 1 AS gap_count
+                FROM porto_trips
+                GROUP BY TAXI_ID
+                HAVING COUNT(*) > 1
+                ORDER BY avg_idle_hours DESC
+                LIMIT 20
+                """
+            self.cursor.execute(query)
+            print(
+                "10. top 20 taxis with the highest average idle time:",
+                tabulate(
+                    self.cursor.fetchall(),
+                    headers=("Taxi ID", "Average idle time [h]", "Gaps"),
+                ),
+                sep="\n",
+            )
+
         for subtask in (
             subtask1,
             subtask2,
@@ -269,6 +307,7 @@ class PortoHandler:
             subtask6,
             subtask7,
             subtask8,
+            subtask10,
         ):
             subtask()
             print()
