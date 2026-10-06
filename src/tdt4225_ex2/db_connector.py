@@ -60,12 +60,13 @@ class DbConnector:
         print("-----------------------------------------------\n")
 
     def close_connection(self):
+        server_info = self.db_connection.get_server_info()
         # close the cursor
         self.cursor.close()
         # close the DB connection
         self.db_connection.close()
         print("\n-----------------------------------------------")
-        print(f"Connection to {self.db_connection.get_server_info()} is closed")
+        print(f"Connection to {server_info} is closed")
 
 
 def default_if_none(value, default):
