@@ -146,7 +146,38 @@ class PortoHandler:
                 )
             )
 
-            # TODO: 4b
+            query = """
+                SELECT
+                    CALL_TYPE,
+                    AVG(N_POINTS) * 15,
+                    AVG(DISTANCE_M),
+                    AVG(HOUR(TIMESTAMP) < 6) * 100,
+                    AVG(HOUR(TIMESTAMP) BETWEEN 6 AND 11) * 100,
+                    AVG(HOUR(TIMESTAMP) BETWEEN 12 AND 17) * 100,
+                    AVG(HOUR(TIMESTAMP) >= 18) * 100
+                FROM porto_trips
+                GROUP BY CALL_TYPE
+                ORDER BY CALL_TYPE
+                """
+            self.cursor.execute(query)
+            print(
+                "4.b average trip duration and distance, and share of trips "
+                "starting in each time band, per call type:"
+            )
+            print(
+                tabulate(
+                    self.cursor.fetchall(),
+                    headers=(
+                        "Call type",
+                        "Avg duration [s]",
+                        "Avg distance [m]",
+                        "00-06 [%]",
+                        "06-12 [%]",
+                        "12-18 [%]",
+                        "18-24 [%]",
+                    ),
+                )
+            )
 
         def subtask6():
             query = """
