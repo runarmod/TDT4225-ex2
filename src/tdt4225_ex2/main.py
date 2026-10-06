@@ -105,8 +105,7 @@ class PortoHandler:
                 self.cursor.execute(query)
                 out.append((name, self.cursor.fetchone()[0]))
 
-            print("1.")
-            print(tabulate(out, headers=("Type", "Count")))
+            print("1.", tabulate(out, headers=("Type", "Count")), sep="\n")
 
         def subtask2():
             query = (
@@ -125,8 +124,11 @@ class PortoHandler:
                 "LIMIT 20"
             )
             self.cursor.execute(query)
-            print("3. top 20 taxi based on trips:")
-            print(tabulate(self.cursor.fetchall(), headers=("Taxi ID", "Trip count")))
+            print(
+                "3. top 20 taxi based on trips:",
+                tabulate(self.cursor.fetchall(), headers=("Taxi ID", "Trip count")),
+                sep="\n",
+            )
 
         def subtask4():
             query = """
@@ -138,13 +140,15 @@ class PortoHandler:
                 ) ranked
                 WHERE rn = 1"""
             self.cursor.execute(query)
-            print("4.a most common call type per taxi:")
             print(
+                "4.a most common call type per taxi:",
                 tabulate(
                     self.cursor.fetchall(),
                     headers=("Taxi ID", "Most used call type", "Used count"),
-                )
+                ),
+                sep="\n",
             )
+            print()
 
             query = """
                 SELECT
@@ -162,9 +166,7 @@ class PortoHandler:
             self.cursor.execute(query)
             print(
                 "4.b average trip duration and distance, and share of trips "
-                "starting in each time band, per call type:"
-            )
-            print(
+                "starting in each time band, per call type:",
                 tabulate(
                     self.cursor.fetchall(),
                     headers=(
@@ -176,7 +178,8 @@ class PortoHandler:
                         "12-18 [%]",
                         "18-24 [%]",
                     ),
-                )
+                ),
+                sep="\n",
             )
 
         def subtask5():
@@ -230,6 +233,7 @@ class PortoHandler:
             print(
                 "6. trips within 100 meters of Porto City Hall:",
                 tabulate(self.cursor.fetchall(), headers=("Trip ID",)),
+                sep="\n",
             )
 
         def subtask7():
@@ -248,8 +252,11 @@ class PortoHandler:
             WHERE DATE(TIMESTAMP + INTERVAL (N_POINTS - 1) * 15 SECOND) = DATE(TIMESTAMP) + INTERVAL 1 DAY
             """
             self.cursor.execute(query)
-            print("8. trips that started on one day and ended on another day:")
-            print(tabulate(self.cursor.fetchall(), headers=("Trip ID",)))
+            print(
+                "8. trips that started on one day and ended on another day:",
+                tabulate(self.cursor.fetchall(), headers=("Trip ID",)),
+                sep="\n",
+            )
 
         def subtask9():
             query = """
@@ -269,6 +276,7 @@ class PortoHandler:
             print(
                 "9. circular trips (only for valid trips):",
                 tabulate(self.cursor.fetchall(), headers=("Trip ID",)),
+                sep="\n",
             )
 
         def subtask10():
