@@ -251,6 +251,26 @@ class PortoHandler:
             print("8. trips that started on one day and ended on another day:")
             print(tabulate(self.cursor.fetchall(), headers=("Trip ID",)))
 
+        def subtask9():
+            query = """
+                SELECT pt.TRIP_ID
+                FROM porto_trips as pt
+                    INNER JOIN porto_trips_polyline as s
+                        ON pt.TRIP_ID = s.TRIP_ID AND s.COORDINATE_NUMBER = 0
+                    INNER JOIN porto_trips_polyline as e
+                        ON pt.TRIP_ID = e.TRIP_ID AND e.COORDINATE_NUMBER = pt.N_POINTS - 1
+                WHERE pt.N_POINTS > 2
+                    AND ST_Distance_Sphere(
+                        POINT(s.LONGITUDE, s.LATITUDE),
+                        POINT(e.LONGITUDE, e.LATITUDE)
+                    ) <= 50
+                """
+            self.cursor.execute(query)
+            print(
+                "9. circular trips (only for valid trips):",
+                tabulate(self.cursor.fetchall(), headers=("Trip ID",)),
+            )
+
         def subtask10():
             # Naive solution:
             # For each taxi, find all its trips. Find the time between each of its trips,
@@ -298,6 +318,7 @@ class PortoHandler:
             subtask6,
             subtask7,
             subtask8,
+            subtask9,
             subtask10,
         ):
             subtask()
