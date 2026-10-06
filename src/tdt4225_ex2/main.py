@@ -4,28 +4,9 @@ import polars as pl
 import tqdm
 from tabulate import tabulate
 
+from tdt4225_ex2.const import POLY_COLS, POLY_SQL, TRIP_COLS, TRIP_SQL
 from tdt4225_ex2.db_connector import DbConnector
-from tdt4225_ex2.eda import get_clean_data
-
-TRIP_COLS = [
-    "TRIP_ID",
-    "CALL_TYPE",
-    "ORIGIN_CALL",
-    "ORIGIN_STAND",
-    "TAXI_ID",
-    "TIMESTAMP",
-    "DAY_TYPE",
-    "MISSING_DATA",
-]
-POLY_COLS = [
-    "TRIP_ID",
-    "COORDINATE_NUMBER",
-    "LONGITUDE",
-    "LATITUDE",
-]
-
-TRIP_SQL = f"INSERT INTO porto_trips ({', '.join(TRIP_COLS)}) VALUES ({', '.join('%s' for _ in TRIP_COLS)})"
-POLY_SQL = f"INSERT INTO porto_trips_polyline ({', '.join(POLY_COLS)}) VALUES ({', '.join('%s' for _ in POLY_COLS)})"
+from tdt4225_ex2.eda import prepare_data
 
 
 class PortoHandler:
@@ -51,7 +32,9 @@ class PortoHandler:
                 TAXI_ID INT NOT NULL,
                 TIMESTAMP DATETIME NOT NULL,
                 DAY_TYPE CHAR NOT NULL,
-                MISSING_DATA BOOL NOT NULL
+                MISSING_DATA BOOL NOT NULL,
+                DISTANCE_M DOUBLE NOT NULL,
+                N_POINTS INT NOT NULL
             )"""
         )
         self.cursor.execute(
@@ -74,35 +57,36 @@ class PortoHandler:
         )
         self.connection.commit()
 
-    def insert_data(self, df: pl.DataFrame):
-        df = df.sort("TRIP_ID")
-        batch_size = 7_500
+    def insert_data(self, trips: pl.DataFrame, polyline: pl.DataFrame):
+        batch_size = 50_000
 
-        for offset in tqdm.trange(0, df.height, batch_size):
-            batch = df.slice(offset, batch_size)
+        # The data is already deduplicated and every polyline row belongs to a
+        # trip in the same dataframe, so the per-row checks are skipped for speed
+        self.cursor.execute("SET unique_checks = 0")
+        self.cursor.execute("SET foreign_key_checks = 0")
+        try:
+            # Trips first, since the polyline rows reference them
+            trips = trips.sort("TRIP_ID")
+            for offset in tqdm.trange(0, trips.height, batch_size, desc="porto_trips"):
+                batch = trips.slice(offset, batch_size)
+                self.cursor.executemany(TRIP_SQL, batch.select(TRIP_COLS).rows())
+                self.connection.commit()
 
-            self.cursor.executemany(TRIP_SQL, batch.select(TRIP_COLS).rows())
-
-            poly_rows = (
-                batch.select("TRIP_ID", "POLYLINE")
-                .explode("POLYLINE", empty_as_null=False)
-                .with_columns(
-                    COORDINATE_NUMBER=pl.int_range(pl.len()).over("TRIP_ID"),
-                    LONGITUDE=pl.col("POLYLINE").list.get(0),
-                    LATITUDE=pl.col("POLYLINE").list.get(1),
-                )
-                .select(POLY_COLS)
-                .rows()
-            )
-            for i in tqdm.trange(0, len(poly_rows), batch_size, leave=False):
-                self.cursor.executemany(POLY_SQL, poly_rows[i : i + batch_size])
-
-            self.connection.commit()
+            polyline = polyline.sort("TRIP_ID", "COORDINATE_NUMBER")
+            for offset in tqdm.trange(
+                0, polyline.height, batch_size, desc="porto_trips_polyline"
+            ):
+                batch = polyline.slice(offset, batch_size)
+                self.cursor.executemany(POLY_SQL, batch.select(POLY_COLS).rows())
+                self.connection.commit()
+        finally:
+            self.cursor.execute("SET unique_checks = 1")
+            self.cursor.execute("SET foreign_key_checks = 1")
 
     def fill_db(self) -> None:
         try:
             self.create_tables()
-            self.insert_data(get_clean_data())
+            self.insert_data(*prepare_data())
             self.create_indexes()
         finally:
             self.db_connector.close_connection()

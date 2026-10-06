@@ -2,8 +2,12 @@ import random
 from pathlib import Path
 from typing import Literal, TypedDict
 
+import numpy as np
 import polars as pl
 import pydeck as pdk
+from haversine import Unit, haversine_vector
+
+from tdt4225_ex2.const import POLY_COLS, TRIP_COLS
 
 pl.Config(set_tbl_cols=1000)
 
@@ -43,7 +47,7 @@ def verify_data(df: pl.DataFrame) -> None:
     )
 
 
-def get_clean_data(verify: bool = False):
+def get_clean_data(verify: bool = False) -> pl.DataFrame:
     porto_csv = Path(__file__).resolve().parents[2] / "porto.csv"
     df = (
         pl.read_csv(porto_csv)
@@ -70,6 +74,53 @@ def get_clean_data(verify: bool = False):
         verify_data(df)
 
     return df
+
+
+def prepare_data() -> tuple[pl.DataFrame, pl.DataFrame]:
+    data = get_clean_data()
+
+    # One row per GPS point, in the same order as in the polyline
+    polyline = (
+        data.select("TRIP_ID", "POLYLINE")
+        .explode("POLYLINE", empty_as_null=False)
+        .with_columns(
+            COORDINATE_NUMBER=pl.int_range(pl.len()).over("TRIP_ID"),
+            LONGITUDE=pl.col("POLYLINE").list.get(0),
+            LATITUDE=pl.col("POLYLINE").list.get(1),
+        )
+        .select(POLY_COLS)
+    )
+
+    # Haversine between every row and the row above it. All trips are stacked in one
+    # table, so for the first point of a trip the row above belongs to another trip.
+    # That distance is not part of any trip and is set to 0 below.
+    coordinates = polyline.select("LATITUDE", "LONGITUDE").to_numpy()
+    segments = np.zeros(polyline.height)
+    if polyline.height > 1:
+        segments[1:] = haversine_vector(
+            coordinates[:-1], coordinates[1:], unit=Unit.METERS
+        )
+    distances = (
+        polyline.select(
+            "TRIP_ID",
+            SEGMENT_M=pl.when(pl.col("COORDINATE_NUMBER") > 0)
+            .then(pl.Series(segments))
+            .otherwise(
+                0.0  # Ignore distance from last taxi trip to first position of next trip
+            ),
+        )
+        .group_by("TRIP_ID")
+        .agg(DISTANCE_M=pl.col("SEGMENT_M").sum())
+    )
+
+    trips = (
+        data.with_columns(N_POINTS=pl.col("POLYLINE").list.len())
+        .join(distances, on="TRIP_ID", how="left")
+        .with_columns(pl.col("DISTANCE_M").fill_null(0.0))  # Trips without points
+        .select(TRIP_COLS)
+    )
+
+    return trips, polyline
 
 
 def get_color(seed: int) -> tuple[int, int, int, Literal[128]]:

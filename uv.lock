@@ -338,6 +338,7 @@ source = { editable = "." }
 dependencies = [
     { name = "haversine" },
     { name = "mysql-connector-python" },
+    { name = "numpy" },
     { name = "polars" },
     { name = "pydeck" },
     { name = "python-dotenv" },
@@ -355,6 +356,7 @@ dev = [
 requires-dist = [
     { name = "haversine", specifier = "==2.8.1" },
     { name = "mysql-connector-python", specifier = "==8.0.33" },
+    { name = "numpy", specifier = ">=2.5.3" },
     { name = "polars", specifier = ">=1.44.2" },
     { name = "pydeck", specifier = ">=0.9.3" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
