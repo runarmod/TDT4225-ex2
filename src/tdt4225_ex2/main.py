@@ -179,6 +179,23 @@ class PortoHandler:
                 )
             )
 
+        def subtask5():
+            query = """
+                SELECT TAXI_ID, SUM(N_POINTS) * 15 / 60 / 60 AS driven_hours, SUM(DISTANCE_M) / 1000
+                FROM porto_trips
+                GROUP BY TAXI_ID
+                ORDER BY driven_hours DESC
+            """
+            self.cursor.execute(query)
+            print(
+                "5. most total hours and distance:",
+                tabulate(
+                    self.cursor.fetchall(),
+                    headers=("Taxi ID", "Total hours [h]", "Total distance [km]"),
+                ),
+                sep="\n",
+            )
+
         def subtask6():
             query = """
             SELECT DISTINCT TRIP_ID
@@ -248,6 +265,7 @@ class PortoHandler:
             subtask2,
             subtask3,
             subtask4,
+            subtask5,
             subtask6,
             subtask7,
             subtask8,
