@@ -66,6 +66,14 @@ class PortoHandler:
         )
         self.connection.commit()
 
+    def create_indexes(self) -> None:
+        # Created after the inserts, as building it once is cheaper than
+        # maintaining it for every inserted row
+        self.cursor.execute(
+            "CREATE INDEX idx_lat_lon ON porto_trips_polyline (LATITUDE, LONGITUDE)"
+        )
+        self.connection.commit()
+
     def insert_data(self, df: pl.DataFrame):
         df = df.sort("TRIP_ID")
         batch_size = 7_500
@@ -95,6 +103,7 @@ class PortoHandler:
         try:
             self.create_tables()
             self.insert_data(get_clean_data())
+            self.create_indexes()
         finally:
             self.db_connector.close_connection()
 
