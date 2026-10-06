@@ -211,7 +211,7 @@ class PortoHandler:
                 FROM porto_trips_polyline
                 GROUP BY TRIP_ID
             ) AS tgp ON pt.TRIP_ID = tgp.TRIP_ID
-            WHERE DATE(pt.TIMESTAMP + INTERVAL tgp.max_coord_num * 15 SECOND) > DATE(pt.TIMESTAMP)
+            WHERE DATE(pt.TIMESTAMP + INTERVAL tgp.max_coord_num * 15 SECOND) = DATE(pt.TIMESTAMP) + INTERVAL 1 DAY
             """
             self.cursor.execute(query)
             print("8. trips that started on one day and ended on another day:")
