@@ -243,14 +243,9 @@ class PortoHandler:
 
         def subtask8():
             query = """
-            SELECT pt.TRIP_ID
-            FROM porto_trips AS pt
-            INNER JOIN (
-                SELECT TRIP_ID, MAX(COORDINATE_NUMBER) AS max_coord_num
-                FROM porto_trips_polyline
-                GROUP BY TRIP_ID
-            ) AS tgp ON pt.TRIP_ID = tgp.TRIP_ID
-            WHERE DATE(pt.TIMESTAMP + INTERVAL tgp.max_coord_num * 15 SECOND) = DATE(pt.TIMESTAMP) + INTERVAL 1 DAY
+            SELECT TRIP_ID
+            FROM porto_trips
+            WHERE DATE(TIMESTAMP + INTERVAL (N_POINTS - 1) * 15 SECOND) = DATE(TIMESTAMP) + INTERVAL 1 DAY
             """
             self.cursor.execute(query)
             print("8. trips that started on one day and ended on another day:")
