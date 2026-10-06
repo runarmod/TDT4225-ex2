@@ -234,14 +234,10 @@ class PortoHandler:
 
         def subtask7():
             query = """
-            SELECT COUNT(*)
-            FROM (
-                SELECT pt.TRIP_ID, COUNT(ptp.TRIP_ID) AS trip_gps_points
-                FROM porto_trips AS pt
-                LEFT JOIN porto_trips_polyline AS ptp ON pt.TRIP_ID = ptp.TRIP_ID
-                GROUP BY pt.TRIP_ID
-                HAVING trip_gps_points < 3
-            ) AS invalid_trips"""
+                SELECT COUNT(*)
+                FROM porto_trips
+                WHERE N_POINTS < 3
+                """
             self.cursor.execute(query)
             print("7. invalid trip count:", self.cursor.fetchone()[0])
 
