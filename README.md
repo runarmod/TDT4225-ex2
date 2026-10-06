@@ -5,10 +5,19 @@
 ```sh
 cp .env.example .env
 uv sync
+uv run pre-commit install
 docker compose up -d
 ```
 
 The database connection settings are read from `.env`. Modify username and password in `.env` if wanted, before starting the database.
+
+## Usage
+
+```sh
+uv run fill_db   # drop, recreate and fill the tables (asks first; --force to skip)
+uv run task2     # run the task 2 queries
+uv run eda       # exploratory checks, writes routes.html
+```
 
 ## Pre-commit hooks
 

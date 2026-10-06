@@ -1,4 +1,5 @@
 import math
+import sys
 
 import polars as pl
 import tqdm
@@ -17,12 +18,12 @@ class PortoHandler:
         self.cursor = self.db_connector.cursor
         self.connection = self.db_connector.db_connection
 
-    def create_tables(self) -> None:
-        # Always start fresh during EDA
+    def drop_tables(self) -> None:
         self.cursor.execute("DROP TABLE IF EXISTS porto_trips_polyline")
         self.cursor.execute("DROP TABLE IF EXISTS porto_trips")
         self.connection.commit()
 
+    def create_tables(self) -> None:
         self.cursor.execute(
             """CREATE TABLE IF NOT EXISTS porto_trips (
                 TRIP_ID BIGINT PRIMARY KEY,
@@ -85,6 +86,7 @@ class PortoHandler:
 
     def fill_db(self) -> None:
         try:
+            self.drop_tables()
             self.create_tables()
             self.insert_data(*prepare_data())
             self.create_indexes()
@@ -223,9 +225,25 @@ class PortoHandler:
             print()
 
 
-def main() -> None:
-    PortoHandler().task2()
+def task2() -> None:
+    handler = PortoHandler()
+    try:
+        handler.task2()
+    finally:
+        handler.db_connector.close_connection()
+
+
+def fill_db() -> None:
+    if "--force" not in sys.argv[1:]:
+        answer = input(
+            "This drops and rebuilds porto_trips and porto_trips_polyline. Continue? [y/N] "
+        )
+        if answer.strip().lower() not in ("y", "yes"):
+            print("Aborted.")
+            return
+
+    PortoHandler().fill_db()
 
 
 if __name__ == "__main__":
-    main()
+    task2()
