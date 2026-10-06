@@ -98,7 +98,7 @@ class PortoHandler:
             queries = [
                 ("taxis", "SELECT COUNT(DISTINCT TAXI_ID) FROM porto_trips"),
                 ("trips", "SELECT COUNT(*) FROM porto_trips"),
-                ("gps points", "SELECT COUNT(*) FROM porto_trips_polyline"),
+                ("gps points", "SELECT SUM(N_POINTS) FROM porto_trips"),
             ]
             out = []
             for name, query in queries:
