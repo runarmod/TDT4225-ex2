@@ -95,17 +95,15 @@ class PortoHandler:
 
     def task2(self):
         def subtask1():
-            queries = [
-                ("taxis", "SELECT COUNT(DISTINCT TAXI_ID) FROM porto_trips"),
-                ("trips", "SELECT COUNT(*) FROM porto_trips"),
-                ("gps points", "SELECT SUM(N_POINTS) FROM porto_trips"),
-            ]
-            out = []
-            for name, query in queries:
-                self.cursor.execute(query)
-                out.append((name, self.cursor.fetchone()[0]))
-
-            print("1.", tabulate(out, headers=("Type", "Count")), sep="\n")
+            query = "SELECT COUNT(DISTINCT TAXI_ID), COUNT(*), SUM(N_POINTS) FROM porto_trips"
+            self.cursor.execute(query)
+            print(
+                "1.",
+                tabulate(
+                    self.cursor.fetchall(), headers=("Taxis", "Trips", "GPS points")
+                ),
+                sep="\n",
+            )
 
         def subtask2():
             query = (
