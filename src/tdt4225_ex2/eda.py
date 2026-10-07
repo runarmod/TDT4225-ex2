@@ -40,14 +40,6 @@ def fix_polylines(polyline: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def remove_invalid_trips(df: pl.DataFrame) -> pl.DataFrame:
-    start_row_count = len(df)
-    df = df.filter(pl.col("POLYLINE").list.len() >= 3)
-    end_row_count = len(df)
-    print(f"2.7: Number of invalid trips: {start_row_count - end_row_count}")
-    return df
-
-
 def verify_data(df: pl.DataFrame) -> None:
     # Verify CALL_TYPE follows rules
     assert df.select(pl.col("CALL_TYPE").str.contains(r"^[ABC]$").all()).item(), (
@@ -94,14 +86,15 @@ def get_data(verify: bool = False) -> pl.DataFrame:
 def prepare_data() -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     data = get_data()
 
-    # df = remove_invalid_trips(df)  # Task 2.7 (Not allowed apparently!)
-
     data = data.filter(~pl.col("MISSING_DATA"))
 
     data = data.unique()  # Remove duplicated lines (found during EDA)
-    data = data.unique(
-        subset=["TRIP_ID"], keep="first"
-    )  # Remove lines with duplicated primary key (TODO: figure out some better way)
+
+    # Remove lines with duplicated primary key. Keep the one with the longest polyline,
+    # and on equal length the one that comes first in the dataframe
+    data = data.sort(
+        pl.col("POLYLINE").list.len(), descending=True, maintain_order=True
+    ).unique(subset=["TRIP_ID"], keep="first", maintain_order=True)
 
     # One row per GPS point, in the same order as in the polyline
     polyline = (
