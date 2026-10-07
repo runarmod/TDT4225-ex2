@@ -18,10 +18,10 @@ uv run fill_db   # drop, recreate and fill the tables (asks first; --force to sk
 uv run task2     # run the task 2 queries
 ```
 
-The exploratory data analysis is in `notebooks/eda.ipynb`. Open it in VS Code and select the `.venv` kernel, or run it in the browser:
+The exploratory data analysis is in `src/tdt4225_ex2/eda.ipynb`. Open it in VS Code and select the `.venv` kernel, or run it in the browser:
 
 ```sh
-uv run jupyter lab notebooks/eda.ipynb
+uv run jupyter lab src/tdt4225_ex2/eda.ipynb
 ```
 
 ## Pre-commit hooks
