@@ -13,8 +13,8 @@ from tdt4225_ex2.const import (
     TRIP_COLS,
     TRIP_SQL,
 )
+from tdt4225_ex2.data_cleaning import prepare_data
 from tdt4225_ex2.db_connector import DbConnector
-from tdt4225_ex2.eda import prepare_data
 
 
 class PortoHandler:
@@ -155,7 +155,7 @@ class PortoHandler:
 
         def subtask4():
             query = """
-                SELECT TAXI_ID, CALL_TYPE, trip_count 
+                SELECT TAXI_ID, CALL_TYPE, trip_count
                 FROM (
                     SELECT TAXI_ID, CALL_TYPE, COUNT(*) AS trip_count, ROW_NUMBER()
                     OVER (PARTITION BY TAXI_ID ORDER BY COUNT(*) DESC, CALL_TYPE) AS rn
