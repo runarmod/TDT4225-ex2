@@ -23,7 +23,6 @@ dependencies = [
 [project.scripts]
 task2 = "tdt4225_ex2.main:task2"
 fill_db = "tdt4225_ex2.main:fill_db"
-eda = "tdt4225_ex2.eda:eda"
 
 [build-system]
 requires = ["uv_build>=0.12.9,<0.13.0"]
@@ -31,6 +30,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "ipykernel>=7.4.0",
     "pre-commit>=4.6.2",
     "ruff>=0.16.8",
 ]

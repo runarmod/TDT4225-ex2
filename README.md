@@ -16,8 +16,9 @@ The database connection settings are read from `.env`. Modify username and passw
 ```sh
 uv run fill_db   # drop, recreate and fill the tables (asks first; --force to skip)
 uv run task2     # run the task 2 queries
-uv run eda       # exploratory checks, writes routes.html
 ```
+
+The exploratory data analysis is in `notebooks/eda.ipynb`. Open it in VS Code and select the `.venv` kernel.
 
 ## Pre-commit hooks
 
