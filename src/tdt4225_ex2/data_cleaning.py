@@ -69,7 +69,10 @@ def get_data(verify: bool = False) -> pl.DataFrame:
             pl.col(pl.String).replace(
                 "", None
             ),  # Replace empty string with explicit null
-            pl.from_epoch("TIMESTAMP", time_unit="s"),  # Unix time to timestamp
+            # Unix time (UTC) to Porto time, so hours and dates are local
+            pl.from_epoch("TIMESTAMP", time_unit="s").dt.convert_time_zone(
+                "Europe/Lisbon"
+            ),
         )
         .with_columns(
             pl.col("ORIGIN_CALL", "ORIGIN_STAND").cast(pl.Int64),
@@ -117,7 +120,11 @@ def prepare_data() -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     )
 
     trips = (
-        data.with_columns(N_POINTS=pl.col("POLYLINE").list.len())
+        data.with_columns(
+            # MySQL DATETIME has no time zone, so store the Porto wall-clock time
+            pl.col("TIMESTAMP").dt.replace_time_zone(None),
+            N_POINTS=pl.col("POLYLINE").list.len(),
+        )
         .join(distances, on="TRIP_ID", how="left")
         .with_columns(pl.col("DISTANCE_M").fill_null(0.0))  # Trips without points
         .select(TRIP_COLS)
