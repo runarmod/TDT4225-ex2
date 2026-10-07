@@ -5,7 +5,14 @@ import polars as pl
 import tqdm
 from tabulate import tabulate
 
-from tdt4225_ex2.const import POLY_COLS, POLY_SQL, TRIP_COLS, TRIP_SQL
+from tdt4225_ex2.const import (
+    DAY_TYPE_COLS,
+    DAY_TYPE_SQL,
+    POLY_COLS,
+    POLY_SQL,
+    TRIP_COLS,
+    TRIP_SQL,
+)
 from tdt4225_ex2.db_connector import DbConnector
 from tdt4225_ex2.eda import prepare_data
 
@@ -21,6 +28,7 @@ class PortoHandler:
     def drop_tables(self) -> None:
         self.cursor.execute("DROP TABLE IF EXISTS porto_trips_polyline")
         self.cursor.execute("DROP TABLE IF EXISTS porto_trips")
+        self.cursor.execute("DROP TABLE IF EXISTS porto_day_types")
         self.connection.commit()
 
     def create_tables(self) -> None:
@@ -32,10 +40,17 @@ class PortoHandler:
                 ORIGIN_STAND INT,
                 TAXI_ID INT NOT NULL,
                 TIMESTAMP DATETIME NOT NULL,
-                DAY_TYPE CHAR NOT NULL,
                 MISSING_DATA BOOL NOT NULL,
                 DISTANCE_M DOUBLE NOT NULL,
                 N_POINTS INT NOT NULL
+            )"""
+        )
+        # The day type is the same for all trips on a date, so it is stored once
+        # per date and looked up with DATE(porto_trips.TIMESTAMP)
+        self.cursor.execute(
+            """CREATE TABLE IF NOT EXISTS porto_day_types (
+                DATE DATE PRIMARY KEY,
+                DAY_TYPE CHAR NOT NULL
             )"""
         )
         self.cursor.execute(
@@ -58,7 +73,9 @@ class PortoHandler:
         )
         self.connection.commit()
 
-    def insert_data(self, trips: pl.DataFrame, polyline: pl.DataFrame):
+    def insert_data(
+        self, trips: pl.DataFrame, polyline: pl.DataFrame, day_types: pl.DataFrame
+    ):
         batch_size = 50_000
 
         # The data is already deduplicated and every polyline row belongs to a
@@ -66,7 +83,14 @@ class PortoHandler:
         self.cursor.execute("SET unique_checks = 0")
         self.cursor.execute("SET foreign_key_checks = 0")
         try:
-            # Trips first, since the polyline rows reference them
+            # Day types first, so a date with several day types fails on the
+            # primary key before the large tables are filled
+            self.cursor.executemany(
+                DAY_TYPE_SQL, day_types.select(DAY_TYPE_COLS).rows()
+            )
+            self.connection.commit()
+
+            # Trips before the polyline rows, since the polyline rows reference them
             trips = trips.sort("TRIP_ID")
             for offset in tqdm.trange(0, trips.height, batch_size, desc="porto_trips"):
                 batch = trips.slice(offset, batch_size)
@@ -342,7 +366,7 @@ def task2() -> None:
 def fill_db() -> None:
     if "--force" not in sys.argv[1:]:
         answer = input(
-            "This drops and rebuilds porto_trips and porto_trips_polyline. Continue? [y/N] "
+            "This drops and rebuilds porto_trips, porto_trips_polyline and porto_day_types. Continue? [y/N] "
         )
         if answer.strip().lower() not in ("y", "yes"):
             print("Aborted.")

@@ -7,7 +7,7 @@ import polars as pl
 import pydeck as pdk
 from haversine import Unit, haversine_vector
 
-from tdt4225_ex2.const import POLY_COLS, TRIP_COLS
+from tdt4225_ex2.const import DAY_TYPE_COLS, POLY_COLS, TRIP_COLS
 
 pl.Config(set_tbl_cols=1000)
 
@@ -69,7 +69,7 @@ def get_data(verify: bool = False) -> pl.DataFrame:
     return df
 
 
-def prepare_data() -> tuple[pl.DataFrame, pl.DataFrame]:
+def prepare_data() -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     data = get_data()
 
     # df = remove_invalid_trips(df)  # Task 2.7 (Not allowed apparently!)
@@ -120,7 +120,13 @@ def prepare_data() -> tuple[pl.DataFrame, pl.DataFrame]:
         .select(TRIP_COLS)
     )
 
-    return trips, polyline
+    day_types = (
+        data.select(pl.col("TIMESTAMP").dt.date().alias("DATE"), "DAY_TYPE")
+        .unique()
+        .sort(DAY_TYPE_COLS)
+    )
+
+    return trips, polyline, day_types
 
 
 def get_color(seed: int) -> tuple[int, int, int, Literal[128]]:
