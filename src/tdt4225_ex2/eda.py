@@ -161,6 +161,15 @@ def eda():
     )
     print(all_dupes)
 
+    # DAY_TYPE distribution, overall and per date
+    print(df["DAY_TYPE"].value_counts(sort=True))
+    day_types_per_date = (
+        df.group_by(pl.col("TIMESTAMP").dt.date().alias("DATE"))
+        .agg(pl.col("DAY_TYPE").unique().sort().alias("DAY_TYPES"))
+        .sort("DATE")
+    )
+    print(day_types_per_date.filter(pl.col("DAY_TYPES").list.len() > 1))
+
     data: list[TripPath] = [
         TripPath(
             path=row["POLYLINE"],
