@@ -15,7 +15,7 @@ The database connection settings are read from `.env`. Modify username and passw
 
 ```sh
 uv run fill_db   # drop, recreate and fill the tables (asks first; --force to skip)
-uv run task2     # run the task 2 queries
+uv run task2     # run the task 2 queries (add --limit to cut long tables to 20 rows)
 ```
 
 The exploratory data analysis is in `src/tdt4225_ex2/eda.ipynb`. Open it in VS Code and select the `.venv` kernel, or run it in the browser:

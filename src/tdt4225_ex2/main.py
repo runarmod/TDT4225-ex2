@@ -24,6 +24,7 @@ class PortoHandler:
         self.db_connector = DbConnector()
         self.cursor = self.db_connector.cursor
         self.connection = self.db_connector.db_connection
+        self.limit = False
 
     def drop_tables(self) -> None:
         self.cursor.execute("DROP TABLE IF EXISTS porto_trips_polyline")
@@ -118,16 +119,42 @@ class PortoHandler:
         finally:
             self.db_connector.close_connection()
 
+    def show_output(self, title: str, headers: tuple[str, ...], intfmt=""):
+        ROW_LIMIT = 20
+        TAIL_ROWS = 3
+
+        rows = self.cursor.fetchall()
+        total = len(rows)
+        truncated = self.limit and total > ROW_LIMIT
+        if truncated:
+            head = ROW_LIMIT - TAIL_ROWS
+            # A row of None is printed as missingval and marks the cut
+            rows = [*rows[:head], (None,) * len(headers), *rows[-TAIL_ROWS:]]
+        print(title)
+        print(
+            tabulate(
+                rows,
+                headers=headers,
+                tablefmt="rounded_outline",
+                floatfmt=",.2f",
+                intfmt=intfmt,
+                missingval="...",
+                numalign="right",
+            )
+        )
+        if truncated:
+            print(f"Showing first {head} and last {TAIL_ROWS} of {total:,} rows")
+        elif total > ROW_LIMIT:
+            print(f"{total:,} rows")
+
     def task2(self):
         def subtask1():
-            query = "SELECT COUNT(DISTINCT TAXI_ID), COUNT(*), SUM(N_POINTS) FROM porto_trips"
+            query = "SELECT COUNT(DISTINCT TAXI_ID), COUNT(*), CAST(SUM(N_POINTS) AS SIGNED) FROM porto_trips"
             self.cursor.execute(query)
-            print(
-                "1.",
-                tabulate(
-                    self.cursor.fetchall(), headers=("Taxis", "Trips", "GPS points")
-                ),
-                sep="\n",
+            self.show_output(
+                "1. Number of taxis, trips and GPS points:",
+                ("Taxis", "Trips", "GPS points"),
+                intfmt=",",
             )
 
         def subtask2():
@@ -136,7 +163,10 @@ class PortoHandler:
                 "FROM (SELECT TAXI_ID, COUNT(*) AS trip_count FROM porto_trips GROUP BY TAXI_ID) AS trip_count"
             )
             self.cursor.execute(query)
-            print("2. average number of trips per taxi:", self.cursor.fetchone()[0])
+            self.show_output(
+                "2. Average number of trips per taxi:",
+                ("Average number of trips per taxi",),
+            )
 
         def subtask3():
             query = (
@@ -147,10 +177,8 @@ class PortoHandler:
                 "LIMIT 20"
             )
             self.cursor.execute(query)
-            print(
-                "3. top 20 taxi based on trips:",
-                tabulate(self.cursor.fetchall(), headers=("Taxi ID", "Trip count")),
-                sep="\n",
+            self.show_output(
+                "3. Top 20 taxis by number of trips:", ("Taxi ID", "Trip count")
             )
 
         def subtask4():
@@ -163,13 +191,9 @@ class PortoHandler:
                 ) ranked
                 WHERE rn = 1"""
             self.cursor.execute(query)
-            print(
-                "4.a most common call type per taxi:",
-                tabulate(
-                    self.cursor.fetchall(),
-                    headers=("Taxi ID", "Most used call type", "Used count"),
-                ),
-                sep="\n",
+            self.show_output(
+                "4.a Most used call type per taxi:",
+                ("Taxi ID", "Call type", "Trip count"),
             )
             print()
 
@@ -187,22 +211,18 @@ class PortoHandler:
                 ORDER BY CALL_TYPE
                 """
             self.cursor.execute(query)
-            print(
-                "4.b average trip duration and distance, and share of trips "
+            self.show_output(
+                "4.b Average trip duration and distance, and share of trips "
                 "starting in each time band, per call type:",
-                tabulate(
-                    self.cursor.fetchall(),
-                    headers=(
-                        "Call type",
-                        "Avg duration [s]",
-                        "Avg distance [m]",
-                        "00-06 [%]",
-                        "06-12 [%]",
-                        "12-18 [%]",
-                        "18-24 [%]",
-                    ),
+                (
+                    "Call type",
+                    "Avg duration [s]",
+                    "Avg distance [m]",
+                    "00-06 [%]",
+                    "06-12 [%]",
+                    "12-18 [%]",
+                    "18-24 [%]",
                 ),
-                sep="\n",
             )
 
         def subtask5():
@@ -213,13 +233,9 @@ class PortoHandler:
                 ORDER BY driven_hours DESC
             """
             self.cursor.execute(query)
-            print(
-                "5. most total hours and distance:",
-                tabulate(
-                    self.cursor.fetchall(),
-                    headers=("Taxi ID", "Total hours [h]", "Total distance [km]"),
-                ),
-                sep="\n",
+            self.show_output(
+                "5. Taxis by total hours and distance driven:",
+                ("Taxi ID", "Total hours [h]", "Total distance [km]"),
             )
 
         def subtask6():
@@ -253,10 +269,8 @@ class PortoHandler:
                 "distance": distance,
             }
             self.cursor.execute(query, params)
-            print(
-                "6. trips within 100 meters of Porto City Hall:",
-                tabulate(self.cursor.fetchall(), headers=("Trip ID",)),
-                sep="\n",
+            self.show_output(
+                "6. Trips within 100 meters of Porto City Hall:", ("Trip ID",)
             )
 
         def subtask7():
@@ -266,7 +280,9 @@ class PortoHandler:
                 WHERE N_POINTS < 3
                 """
             self.cursor.execute(query)
-            print("7. invalid trip count:", self.cursor.fetchone()[0])
+            self.show_output(
+                "7. Invalid trips (fewer than 3 GPS points):", ("Invalid trips",)
+            )
 
         def subtask8():
             query = """
@@ -275,10 +291,8 @@ class PortoHandler:
             WHERE DATE(TIMESTAMP + INTERVAL (N_POINTS - 1) * 15 SECOND) = DATE(TIMESTAMP) + INTERVAL 1 DAY
             """
             self.cursor.execute(query)
-            print(
-                "8. trips that started on one day and ended on another day:",
-                tabulate(self.cursor.fetchall(), headers=("Trip ID",)),
-                sep="\n",
+            self.show_output(
+                "8. Trips that started on one day and ended on the next:", ("Trip ID",)
             )
 
         def subtask9():
@@ -296,11 +310,7 @@ class PortoHandler:
                     ) <= 50
                 """
             self.cursor.execute(query)
-            print(
-                "9. circular trips (only for valid trips):",
-                tabulate(self.cursor.fetchall(), headers=("Trip ID",)),
-                sep="\n",
-            )
+            self.show_output("9. Circular trips (valid trips only):", ("Trip ID",))
 
         def subtask10():
             # Naive solution:
@@ -331,13 +341,9 @@ class PortoHandler:
                 LIMIT 20
                 """
             self.cursor.execute(query)
-            print(
-                "10. top 20 taxis with the highest average idle time:",
-                tabulate(
-                    self.cursor.fetchall(),
-                    headers=("Taxi ID", "Average idle time [h]", "Gaps"),
-                ),
-                sep="\n",
+            self.show_output(
+                "10. Top 20 taxis by average idle time between trips:",
+                ("Taxi ID", "Average idle time [h]", "Gaps"),
             )
 
         for subtask in (
@@ -358,6 +364,7 @@ class PortoHandler:
 
 def task2() -> None:
     handler = PortoHandler()
+    handler.limit = "--limit" in sys.argv[1:]
     try:
         handler.task2()
     finally:
