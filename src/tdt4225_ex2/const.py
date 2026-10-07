@@ -23,3 +23,6 @@ DAY_TYPE_COLS = [
 TRIP_SQL = f"INSERT INTO porto_trips ({', '.join(TRIP_COLS)}) VALUES ({', '.join('%s' for _ in TRIP_COLS)})"
 POLY_SQL = f"INSERT INTO porto_trips_polyline ({', '.join(POLY_COLS)}) VALUES ({', '.join('%s' for _ in POLY_COLS)})"
 DAY_TYPE_SQL = f"INSERT INTO porto_day_types ({', '.join(DAY_TYPE_COLS)}) VALUES ({', '.join('%s' for _ in DAY_TYPE_COLS)})"
+
+# Further than 200 km/h for the 15 seconds between two GPS points is a GPS error
+MAX_STEP_M = 200 / 3.6 * 15
