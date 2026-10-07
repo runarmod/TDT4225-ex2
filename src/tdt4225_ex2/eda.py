@@ -47,7 +47,7 @@ def verify_data(df: pl.DataFrame) -> None:
     )
 
 
-def get_clean_data(verify: bool = False) -> pl.DataFrame:
+def get_data(verify: bool = False) -> pl.DataFrame:
     porto_csv = Path(__file__).resolve().parents[2] / "porto.csv"
     df = (
         pl.read_csv(porto_csv)
@@ -63,13 +63,6 @@ def get_clean_data(verify: bool = False) -> pl.DataFrame:
         )
     )
 
-    # df = remove_invalid_trips(df)  # Task 2.7 (Not allowed apparently!)
-
-    df = df.unique()  # Remove duplicated lines (found during EDA)
-    df = df.unique(
-        subset=["TRIP_ID"], keep="first"
-    )  # Remove lines with duplicated primary key (TODO: figure out some better way)
-
     if verify:
         verify_data(df)
 
@@ -77,7 +70,14 @@ def get_clean_data(verify: bool = False) -> pl.DataFrame:
 
 
 def prepare_data() -> tuple[pl.DataFrame, pl.DataFrame]:
-    data = get_clean_data()
+    data = get_data()
+
+    # df = remove_invalid_trips(df)  # Task 2.7 (Not allowed apparently!)
+
+    data = data.unique()  # Remove duplicated lines (found during EDA)
+    data = data.unique(
+        subset=["TRIP_ID"], keep="first"
+    )  # Remove lines with duplicated primary key (TODO: figure out some better way)
 
     # One row per GPS point, in the same order as in the polyline
     polyline = (
@@ -148,7 +148,7 @@ def visualize_trip_paths(data: list[TripPath]) -> None:
 
 
 def eda():
-    df = get_clean_data(verify=True)
+    df = get_data(verify=True)
     dupe_counts = (
         df.group_by("TRIP_ID").agg(pl.len().alias("count")).filter(pl.col("count") > 1)
     )
