@@ -63,6 +63,8 @@ def prepare_data() -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
 
     # df = remove_invalid_trips(df)  # Task 2.7 (Not allowed apparently!)
 
+    data = data.filter(~pl.col("MISSING_DATA"))
+
     data = data.unique()  # Remove duplicated lines (found during EDA)
     data = data.unique(
         subset=["TRIP_ID"], keep="first"
