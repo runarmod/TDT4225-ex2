@@ -158,10 +158,15 @@ class PortoHandler:
             )
 
         def subtask2():
-            query = (
-                "SELECT AVG(trip_count)"
-                "FROM (SELECT TAXI_ID, COUNT(*) AS trip_count FROM porto_trips GROUP BY TAXI_ID) AS trip_count"
-            )
+            query = """
+                SELECT AVG(trip_count)
+                FROM (
+                    SELECT TAXI_ID, COUNT(*) AS trip_count
+                    FROM porto_trips
+                    GROUP BY TAXI_ID
+                ) AS taxi_trip_counts
+            """
+
             self.cursor.execute(query)
             self.show_output(
                 "2. Average number of trips per taxi:",
