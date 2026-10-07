@@ -61,6 +61,7 @@ class PortoHandler:
                 LATITUDE DOUBLE NOT NULL,
                 PRIMARY KEY (TRIP_ID, COORDINATE_NUMBER),
                 CONSTRAINT FOREIGN KEY (TRIP_ID) REFERENCES porto_trips(TRIP_ID)
+                    ON DELETE CASCADE ON UPDATE CASCADE
             )"""
         )
         self.connection.commit()
