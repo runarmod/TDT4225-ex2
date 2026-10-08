@@ -292,7 +292,7 @@ class PortoHandler:
             query = """
             SELECT TRIP_ID
             FROM porto_trips
-            WHERE DATE(TIMESTAMP + INTERVAL (N_POINTS - 1) * 15 SECOND) = DATE(TIMESTAMP) + INTERVAL 1 DAY
+            WHERE DATE(TIMESTAMP + INTERVAL N_POINTS * 15 SECOND) = DATE(TIMESTAMP) + INTERVAL 1 DAY
             """
             self.cursor.execute(query)
             self.show_output(
