@@ -5,7 +5,6 @@ TRIP_COLS = [
     "ORIGIN_STAND",
     "TAXI_ID",
     "TIMESTAMP",
-    "MISSING_DATA",
     "DISTANCE_M",
     "N_POINTS",
 ]

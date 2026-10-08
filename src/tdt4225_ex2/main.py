@@ -41,7 +41,6 @@ class PortoHandler:
                 ORIGIN_STAND INT,
                 TAXI_ID INT NOT NULL,
                 TIMESTAMP DATETIME NOT NULL,
-                MISSING_DATA BOOL NOT NULL,
                 DISTANCE_M DOUBLE NOT NULL,
                 N_POINTS INT NOT NULL
             )"""
